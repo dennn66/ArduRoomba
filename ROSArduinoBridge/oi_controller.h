@@ -179,6 +179,8 @@ void driveDirect(int leftVel, int rightVel)
           isMotorDisabled=false;
       }
       setMotorSpeeds(0, 0);
+      resetPID();
+
       moving = 0;
       return;
   }
@@ -216,6 +218,7 @@ void driveOI(int velocity, int radius)
       }
       
       setMotorSpeeds(0, 0);
+      resetPID();
 
       moving = 0;
       return;

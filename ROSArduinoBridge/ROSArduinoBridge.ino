@@ -159,7 +159,7 @@ void alert(int _times, int _runTime, int _stopTime)
    
    //#define POSITION_PID
    #define VELOCITY_PID
-   //#define PID_REGULATOR
+   #define PID_REGULATOR
    
    #undef MAGNETO_HMC5883L
 
@@ -339,6 +339,7 @@ void loop() {
     // Read the next character
         opcode = Serial2.read();
         oi.setSensorValue(OI_SENSOR_IR, opcode);
+        Serial.println(opcode);
     //    Serial.println(opcode);
     }
 

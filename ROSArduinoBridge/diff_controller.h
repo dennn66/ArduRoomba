@@ -8,6 +8,7 @@
 *   
 *  http://vanadium-ros-pkg.googlecode.com/svn/trunk/arbotix/
 */
+  
 #ifdef VELOCITY_PID
   /* PID setpoint info for a Motor */
   typedef struct {
@@ -18,6 +19,7 @@
     int prevPrevInput;             // input before last input
     int prevError;                 // last error
     int output;                   // last motor setting
+    unsigned long pidTime;       // last pid time
   }
   SetPointInfo;
 #elif defined POSITION_PID
@@ -75,6 +77,7 @@ void resetPID(){
    leftPID.prevInput = 0;
    leftPID.prevPrevInput = 0;
    leftPID.prevError = 0;
+   leftPID.pidTime = millis();
 
    rightPID.targetTicksPerFrame = 0;
    rightPID.encoder = readEncoder(1);
@@ -83,6 +86,8 @@ void resetPID(){
    rightPID.prevInput = 0;
    rightPID.prevPrevInput = 0;
    rightPID.prevError = 0;
+   rightPID.pidTime = millis();
+
 #elif defined POSITION_PID
    leftPID.targetTicksPerFrame = 0;
    leftPID.encoder = readEncoder(0);
@@ -118,7 +123,24 @@ void doPID(SetPointInfo * p) {
   *
   * see https://groups.google.com/forum/#!topic/diy-pid-control/1Tkwp9e_8co for full derivation 
   */
-  output = p->output + (Kp * (error - p->prevError) + Ki * error - Kd * (input - 2*p->prevInput + p->prevPrevInput)) / Ko;
+  
+//      Kp = newKp * pidRate;
+//    Ki = newKi;
+//    Kd = newKd * pidRate * pidRate;  
+//    Ko = newKo * pidRate;
+
+  int pidRate = 1000/(int)(millis()-p->pidTime); 
+  p->pidTime = millis();
+  
+  int Kp1 = Kp * pidRate;
+  int Ki1 = Ki;
+  int Kd1 = Kd * pidRate * pidRate;  
+  int Ko1 = Ko * pidRate;
+
+//  output = p->output + (Kp * (error - p->prevError) + Ki * error - Kd * (input - 2*p->prevInput + p->prevPrevInput)) / Ko;
+
+  output = p->output + (Kp1 * (error - p->prevError) + Ki1 * error - Kd1 * (input - 2*p->prevInput + p->prevPrevInput)) / Ko1;
+
   
   /*version robust against too aggressive setpoint tracking (with proportional on measurement)*/
   //output = p->output + (Kp * (p->prevInput - input) + Ki * error - Kd * (input - 2*p->prevInput + p->prevPrevInput)) / Ko;
@@ -131,11 +153,17 @@ void doPID(SetPointInfo * p) {
   *
   * Stop accumulating integral error when output is limited.
   */
+  /*
   if (p->targetTicksPerFrame > 0 && output < MIN_PWM) 
     output = MIN_PWM;
   else if (p->targetTicksPerFrame < 0 && output > -MIN_PWM) 
     output = -MIN_PWM;
   else if (output > MAX_PWM)
+    output = MAX_PWM;
+  else if (output < -MAX_PWM)
+    output = -MAX_PWM;
+*/
+   if (output > MAX_PWM)
     output = MAX_PWM;
   else if (output < -MAX_PWM)
     output = -MAX_PWM;
@@ -230,10 +258,18 @@ void updatePID() {
 //Assuming pid_rate and Kx parameters all given in s
 //Doing some effort to keep things in integer math, through use of Ko
 void setPIDParams(int newKp, int newKd, int newKi, int newKo, int pidRate){
+    Kp = newKp;
+    Ki = newKi;
+    Kd = newKd;  
+    Ko = newKo;
+    /*
     Kp = newKp * pidRate;
     Ki = newKi;
     Kd = newKd * pidRate * pidRate;  
     Ko = newKo * pidRate;
+
+    */
+    
 }
 
 
