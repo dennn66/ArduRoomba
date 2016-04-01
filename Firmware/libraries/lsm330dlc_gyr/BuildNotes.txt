@@ -1,0 +1,28 @@
+The driver espects to be placed in $KERNELROOT/drivers/input/misc/ directory in kernel tree.
+
+insert the following lines in $KERNELROOT/drivers/input/misc/Kconfig:
+
+config INPUT_LSM330DLC
+	tristate "STM MEMS Combo Accelerometer Gyroscope LSM330DLC"
+	depends on I2C && SYSFS
+	select INPUT_POLLDEV
+        default n
+	help
+	 If you say yes here you get support for the
+	 STM LSM330DLC Combo 3D Accelerometer / Gyroscope on I2C bus.
+	 This driver can also be built as a module (choose M).
+	 If so, you will get 2 modules called: lsm330dlc_acc and lsm330dlc_gyr.
+	
+
+
+
+
+/////////////////////////////////////////////////////////
+insert the following lines in $KERNELROOT/drivers/input/misc/Makefile:
+
+
+obj-$(CONFIG_INPUT_LSM330DLC)		+= lsm330dlc_acc.o lsm330dlc_gyr.o
+
+
+
+ 
